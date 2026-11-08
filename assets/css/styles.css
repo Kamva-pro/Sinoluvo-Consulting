@@ -1404,6 +1404,14 @@ p {
   object-position: center 35%;
 }
 
+.svc-feature-portrait {
+  grid-template-columns: 0.8fr 1.2fr;
+}
+
+.svc-feature-portrait img {
+  min-height: 400px;
+}
+
 .services.two {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -1549,6 +1557,15 @@ p {
     height: auto;
     min-height: 0;
     aspect-ratio: 4 / 3;
+  }
+
+  .svc-feature-portrait {
+    grid-template-columns: 1fr;
+  }
+
+  .svc-feature-portrait img {
+    min-height: 0;
+    aspect-ratio: 4 / 4.2;
   }
 
   .hero-inset {
