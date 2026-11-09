@@ -1,0 +1,5 @@
+# Raw uploads and archives stay local, not on the public site
+*.zip
+*.mp4
+*.mov
+WhatsApp *
