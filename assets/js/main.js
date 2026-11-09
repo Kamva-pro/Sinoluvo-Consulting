@@ -4,6 +4,49 @@ const nav = document.getElementById('site-nav');
 toggle.addEventListener('click', () => {
   const open = nav.classList.toggle('open');
   toggle.setAttribute('aria-expanded', open);
+  toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+});
+
+// Ripple from the click point on buttons
+document.querySelectorAll('.btn').forEach(btn => {
+  btn.addEventListener('pointerdown', e => {
+    const r = btn.getBoundingClientRect();
+    const dot = document.createElement('span');
+    dot.className = 'ripple';
+    dot.style.left = `${e.clientX - r.left}px`;
+    dot.style.top = `${e.clientY - r.top}px`;
+    btn.appendChild(dot);
+    setTimeout(() => dot.remove(), 650);
+  });
+});
+
+// Page transitions: browsers with cross-document view transitions animate in CSS;
+// others get a fade out before leaving and a fade in on arrival
+const root = document.documentElement;
+const nativeTransitions = 'PageRevealEvent' in window;
+if (!nativeTransitions) root.classList.add('no-vt');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const progress = document.createElement('div');
+progress.className = 'page-progress';
+document.body.appendChild(progress);
+
+document.addEventListener('click', e => {
+  const link = e.target.closest('a[href]');
+  if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (link.target === '_blank' || link.hasAttribute('download')) return;
+  const url = new URL(link.href, location.href);
+  if (url.origin !== location.origin) return;
+  // Same-page anchors just scroll
+  if (url.pathname === location.pathname && url.hash) return;
+  root.classList.add('page-leaving');
+  if (nativeTransitions || reduceMotion) return;
+  e.preventDefault();
+  setTimeout(() => (location.href = url.href), 240);
+});
+
+// Coming back with the browser's back button restores the page from cache, so reset it
+window.addEventListener('pageshow', e => {
+  if (e.persisted) root.classList.remove('page-leaving');
 });
 
 // Header gains a shadow once the page scrolls
@@ -72,7 +115,13 @@ if (gallery && lightbox) {
   const show = i => {
     index = (i + items.length) % items.length;
     const thumb = items[index].querySelector('img');
-    lbImg.src = items[index].dataset.full;
+    // Fade the old photo out, then fade the next one in once it has loaded
+    lbImg.classList.add('swap');
+    setTimeout(() => {
+      lbImg.onload = () => lbImg.classList.remove('swap');
+      lbImg.src = items[index].dataset.full;
+      if (lbImg.complete) lbImg.classList.remove('swap');
+    }, 150);
     lbImg.alt = thumb.alt;
     lbCaption.textContent = `${thumb.alt} (${index + 1} of ${items.length})`;
   };

@@ -1747,3 +1747,231 @@ body.lb-open {
     max-height: 70vh;
   }
 }
+
+/* ===== Smoother interactions ===== */
+:root {
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+}
+
+.btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    background 0.35s var(--ease),
+    color 0.35s var(--ease),
+    border-color 0.35s var(--ease),
+    box-shadow 0.35s var(--ease),
+    transform 0.35s var(--ease-spring);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(142, 84, 81, 0.22);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 3px 8px rgba(142, 84, 81, 0.18);
+  transition-duration: 0.12s;
+}
+
+/* Soft ripple from the click point (set by main.js) */
+.btn .ripple {
+  position: absolute;
+  z-index: -1;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.25;
+  pointer-events: none;
+  animation: ripple 0.6s var(--ease) forwards;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(28);
+    opacity: 0;
+  }
+}
+
+.btn:focus-visible,
+.chip-nav a:focus-visible,
+.lb-btn:focus-visible,
+.site-nav a:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 3px;
+}
+
+.site-nav a:not(.btn)::after {
+  transition: right 0.35s var(--ease);
+}
+
+.service,
+.tile,
+.tile::before,
+.tile h3,
+.tile p,
+.tile-arrow,
+.text-link span {
+  transition-timing-function: var(--ease);
+}
+
+.service:active,
+.tile:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.chip-nav a {
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease-spring);
+}
+
+.chip-nav a:hover {
+  transform: translateY(-1px);
+}
+
+.chip-nav a:active {
+  transform: scale(0.96);
+}
+
+.lb-btn {
+  transition: background 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease-spring);
+}
+
+.lb-btn:active {
+  transform: scale(0.92);
+}
+
+.lb-figure img {
+  transition: opacity 0.25s var(--ease);
+}
+
+.lb-figure img.swap {
+  opacity: 0;
+}
+
+/* Burger morphs into a cross */
+.nav-toggle span {
+  transition: transform 0.35s var(--ease), opacity 0.2s var(--ease);
+}
+
+.nav-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Mobile menu slides down instead of snapping open */
+@media (max-width: 860px) {
+  .site-nav {
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s var(--ease), transform 0.35s var(--ease), visibility 0s 0.35s;
+  }
+
+  .site-nav.open {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.3s var(--ease), transform 0.35s var(--ease), visibility 0s;
+  }
+
+  .site-nav a:not(.btn) {
+    transition: padding-left 0.3s var(--ease), color 0.3s var(--ease);
+  }
+
+  .site-nav a:not(.btn):hover {
+    padding-left: 8px;
+    color: var(--rose-deep);
+  }
+}
+
+/* ===== Page transitions ===== */
+/* Browsers with cross-document view transitions animate natively; the header stays put */
+@view-transition {
+  navigation: auto;
+}
+
+.site-header {
+  view-transition-name: site-header;
+}
+
+::view-transition-old(root) {
+  animation: page-out 0.28s var(--ease) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in 0.5s 0.08s var(--ease) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Fallback for other browsers (main.js adds .no-vt) */
+.no-vt main,
+.no-vt .site-footer {
+  animation: page-in 0.5s var(--ease) both;
+}
+
+.no-vt.page-leaving main,
+.no-vt.page-leaving .site-footer {
+  animation: page-out 0.25s var(--ease) both;
+}
+
+/* Thin rose bar that sweeps across while the next page loads */
+.page-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 200;
+  background: linear-gradient(90deg, var(--rose), var(--rose-deep));
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.page-leaving .page-progress {
+  transition: transform 1.2s var(--ease);
+  transform: scaleX(0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+
+  .no-vt main,
+  .no-vt .site-footer,
+  .btn .ripple {
+    animation: none !important;
+  }
+
+  .site-nav,
+  .site-nav.open {
+    transition: none;
+  }
+}
