@@ -58,3 +58,56 @@ if (form) {
 }
 
 document.querySelectorAll('.year').forEach(el => (el.textContent = new Date().getFullYear()));
+
+// Gallery lightbox
+const gallery = document.getElementById('gallery');
+const lightbox = document.getElementById('lightbox');
+if (gallery && lightbox) {
+  const items = [...gallery.querySelectorAll('.gallery-item')];
+  const lbImg = lightbox.querySelector('img');
+  const lbCaption = lightbox.querySelector('figcaption');
+  let index = 0;
+  let opener = null;
+
+  const show = i => {
+    index = (i + items.length) % items.length;
+    const thumb = items[index].querySelector('img');
+    lbImg.src = items[index].dataset.full;
+    lbImg.alt = thumb.alt;
+    lbCaption.textContent = `${thumb.alt} (${index + 1} of ${items.length})`;
+  };
+  const open = i => {
+    opener = items[i];
+    show(i);
+    lightbox.hidden = false;
+    document.body.classList.add('lb-open');
+    lightbox.querySelector('.lb-close').focus();
+  };
+  const close = () => {
+    lightbox.hidden = true;
+    document.body.classList.remove('lb-open');
+    if (opener) opener.focus();
+  };
+
+  items.forEach((item, i) => item.addEventListener('click', () => open(i)));
+  lightbox.querySelector('.lb-close').addEventListener('click', close);
+  lightbox.querySelector('.lb-prev').addEventListener('click', () => show(index - 1));
+  lightbox.querySelector('.lb-next').addEventListener('click', () => show(index + 1));
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) close(); });
+  document.addEventListener('keydown', e => {
+    if (lightbox.hidden) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(index - 1);
+    if (e.key === 'ArrowRight') show(index + 1);
+  });
+
+  // Swipe on touch screens
+  let startX = null;
+  lightbox.addEventListener('touchstart', e => (startX = e.touches[0].clientX), { passive: true });
+  lightbox.addEventListener('touchend', e => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+    startX = null;
+  });
+}
