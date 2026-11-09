@@ -225,7 +225,7 @@ p {
 
 /* Hero */
 .hero {
-  padding: clamp(24px, 8vw, 64x) 0 clamp(32px, 8vw, 72px);
+  padding: clamp(24px, 8vw, 64px) 0 clamp(32px, 8vw, 72px);
 }
 
 .hero-inner {
