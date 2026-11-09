@@ -20,33 +20,34 @@ document.querySelectorAll('.btn').forEach(btn => {
   });
 });
 
-// Page transitions: browsers with cross-document view transitions animate in CSS;
-// others get a fade out before leaving and a fade in on arrival
+// Page transitions: the page fades to cream and the logo's heartbeat draws before leaving;
+// the next page opens with the line drawn and clears it (pt-arrive is set in each page's head)
 const root = document.documentElement;
-const nativeTransitions = 'PageRevealEvent' in window;
-if (!nativeTransitions) root.classList.add('no-vt');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const progress = document.createElement('div');
-progress.className = 'page-progress';
-document.body.appendChild(progress);
+
+if (root.classList.contains('pt-arrive')) {
+  try { sessionStorage.removeItem('pt'); } catch (e) {}
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('pt-reveal')));
+  setTimeout(() => root.classList.remove('pt-arrive', 'pt-reveal'), 800);
+}
 
 document.addEventListener('click', e => {
   const link = e.target.closest('a[href]');
-  if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (!link || reduceMotion || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   if (link.target === '_blank' || link.hasAttribute('download')) return;
   const url = new URL(link.href, location.href);
   if (url.origin !== location.origin) return;
   // Same-page anchors just scroll
-  if (url.pathname === location.pathname && url.hash) return;
-  root.classList.add('page-leaving');
-  if (nativeTransitions || reduceMotion) return;
+  if (url.pathname === location.pathname) return;
   e.preventDefault();
-  setTimeout(() => (location.href = url.href), 240);
+  try { sessionStorage.setItem('pt', '1'); } catch (e) {}
+  root.classList.add('pt-leave');
+  setTimeout(() => (location.href = url.href), 1150);
 });
 
 // Coming back with the browser's back button restores the page from cache, so reset it
 window.addEventListener('pageshow', e => {
-  if (e.persisted) root.classList.remove('page-leaving');
+  if (e.persisted) root.classList.remove('pt-leave', 'pt-arrive', 'pt-reveal');
 });
 
 // Header gains a shadow once the page scrolls

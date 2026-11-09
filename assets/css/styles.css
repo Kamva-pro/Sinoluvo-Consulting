@@ -1898,74 +1898,93 @@ body.lb-open {
 }
 
 /* ===== Page transitions ===== */
-/* Browsers with cross-document view transitions animate natively; the header stays put */
-@view-transition {
-  navigation: auto;
-}
-
-.site-header {
-  view-transition-name: site-header;
-}
-
-::view-transition-old(root) {
-  animation: page-out 0.28s var(--ease) both;
-}
-
-::view-transition-new(root) {
-  animation: page-in 0.5s 0.08s var(--ease) both;
-}
-
-@keyframes page-out {
-  to {
-    opacity: 0;
-    transform: translateY(-14px);
-  }
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-}
-
-/* Fallback for other browsers (main.js adds .no-vt) */
-.no-vt main,
-.no-vt .site-footer {
-  animation: page-in 0.5s var(--ease) both;
-}
-
-.no-vt.page-leaving main,
-.no-vt.page-leaving .site-footer {
-  animation: page-out 0.25s var(--ease) both;
-}
-
-/* Thin rose bar that sweeps across while the next page loads */
-.page-progress {
+/* On link click the page fades to cream, the logo's heartbeat draws in the centre,
+   then the next page loads and the line clears to reveal it (see main.js) */
+.page-loader {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  z-index: 200;
-  background: linear-gradient(90deg, var(--rose), var(--rose-deep));
-  transform: scaleX(0);
-  transform-origin: left;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: var(--cream);
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.3s var(--ease), visibility 0s 0.3s;
 }
 
-.page-leaving .page-progress {
-  transition: transform 1.2s var(--ease);
-  transform: scaleX(0.85);
+.page-loader svg {
+  width: min(280px, 64vw);
+  overflow: visible;
+}
+
+.page-loader path {
+  fill: none;
+  stroke: var(--rose-deep);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.pt-leave .page-loader,
+.pt-arrive .page-loader {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.3s var(--ease), visibility 0s;
+}
+
+.pt-leave .page-loader path {
+  animation: pt-draw 0.8s 0.2s cubic-bezier(.6, .1, .3, 1) forwards;
+}
+
+.pt-leave .page-loader svg {
+  animation: pt-beat 0.35s 0.95s var(--ease);
+}
+
+/* Arriving: the line starts fully drawn, then clears from the left as the cream fades away */
+.pt-arrive .page-loader {
+  transition: none;
+}
+
+.pt-arrive .page-loader path {
+  stroke-dashoffset: 0;
+}
+
+.pt-arrive.pt-reveal .page-loader {
+  opacity: 0;
+  transition: opacity 0.45s 0.3s var(--ease);
+}
+
+.pt-arrive.pt-reveal .page-loader path {
+  animation: pt-erase 0.5s var(--ease) forwards;
+}
+
+@keyframes pt-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pt-erase {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes pt-beat {
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @view-transition {
-    navigation: none;
-  }
-
-  .no-vt main,
-  .no-vt .site-footer,
   .btn .ripple {
     animation: none !important;
   }
