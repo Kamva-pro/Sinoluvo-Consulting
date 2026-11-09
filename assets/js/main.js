@@ -20,23 +20,25 @@ document.querySelectorAll('.btn').forEach(btn => {
   });
 });
 
-// Page transitions: the page fades to cream and the logo builds itself before leaving;
-// the next page opens on the full logo (pt-arrive is set in each page's head)
+// Page transitions: the first page of a visit opens with the logo building itself;
+// after that, page switches fade through cream (pt-intro / pt-arrive are set in each page's head)
 const root = document.documentElement;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const LEAVE_MS = 2700;
-
-if (root.classList.contains('pt-arrive')) {
-  try { sessionStorage.removeItem('pt'); } catch (e) {}
-  // Hold the logo briefly, and until the page has loaded (at most 2.5s), then reveal it
-  const minHold = new Promise(r => setTimeout(r, 450));
-  const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true }));
-  const cap = new Promise(r => setTimeout(r, 2500));
-  Promise.all([minHold, Promise.race([loaded, cap])]).then(() => {
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const pageLoaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true }));
+const reveal = (hold, cap) =>
+  Promise.all([wait(hold), Promise.race([pageLoaded, wait(cap)])]).then(() => {
     root.classList.add('pt-reveal');
-    setTimeout(() => root.classList.remove('pt-arrive', 'pt-reveal'), 950);
-  });
-}
+    return wait(900);
+  }).then(() => root.classList.remove('pt-intro', 'pt-arrive', 'pt-reveal'));
+
+try {
+  sessionStorage.setItem('seen', '1');
+  sessionStorage.removeItem('pt');
+} catch (e) {}
+if (reduceMotion) root.classList.remove('pt-intro', 'pt-arrive');
+else if (root.classList.contains('pt-intro')) reveal(2600, 5000);
+else if (root.classList.contains('pt-arrive')) reveal(120, 1500);
 
 let leaving = false;
 document.addEventListener('click', e => {
@@ -51,18 +53,15 @@ document.addEventListener('click', e => {
   if (leaving) return;
   leaving = true;
   try { sessionStorage.setItem('pt', '1'); } catch (e) {}
-  // Restart from a clean state so the animation always plays from the beginning
-  root.classList.remove('pt-arrive', 'pt-reveal');
-  void root.offsetWidth;
   root.classList.add('pt-leave');
-  setTimeout(() => (location.href = url.href), LEAVE_MS);
+  setTimeout(() => (location.href = url.href), 380);
 });
 
 // Coming back with the browser's back button restores the page from cache, so reset it
 window.addEventListener('pageshow', e => {
   if (!e.persisted) return;
   leaving = false;
-  root.classList.remove('pt-leave', 'pt-arrive', 'pt-reveal');
+  root.classList.remove('pt-leave', 'pt-intro', 'pt-arrive', 'pt-reveal');
 });
 
 // Header gains a shadow once the page scrolls

@@ -1898,9 +1898,9 @@ body.lb-open {
 }
 
 /* ===== Page transitions ===== */
-/* On link click the page fades to cream and the logo builds itself: its heartbeat line draws,
-   the three heads pop on, then the name wipes in. The next page opens on the full logo,
-   which lifts away once the page has loaded (see main.js) */
+/* First page of a visit: the page opens on cream while the logo builds itself (its heartbeat
+   line draws, the heads pop on, the name wipes in), then it lifts away.
+   After that, switching pages is a quick fade through cream (see main.js) */
 .page-loader {
   position: fixed;
   inset: 0;
@@ -1911,13 +1911,44 @@ body.lb-open {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.4s var(--ease), visibility 0s 0.4s;
+  transition: opacity 0.35s var(--ease), visibility 0s 0.35s;
 }
 
+.pt-intro .page-loader,
+.pt-leave .page-loader,
+.pt-arrive .page-loader {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.35s var(--ease), visibility 0s;
+}
+
+/* Arriving pages start covered, so no transition in */
+.pt-intro .page-loader,
+.pt-arrive .page-loader {
+  transition: none;
+}
+
+.pt-intro.pt-reveal .page-loader,
+.pt-arrive.pt-reveal .page-loader {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+}
+
+.pt-intro.pt-reveal .page-loader {
+  transition-delay: 0.3s;
+}
+
+/* Logo intro */
 .pt-logo {
+  display: none;
   position: relative;
   width: min(480px, 84vw);
   aspect-ratio: 572 / 234;
+}
+
+.pt-intro .pt-logo {
+  display: block;
 }
 
 .pt-logo svg,
@@ -1941,6 +1972,7 @@ body.lb-open {
 .pt-line {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
+  animation: pt-draw 1.3s 0.2s cubic-bezier(.55, .1, .35, 1) forwards;
 }
 
 .pt-head {
@@ -1948,61 +1980,19 @@ body.lb-open {
   transform-origin: center;
   transform: scale(0);
   opacity: 0;
+  animation: pt-pop 0.55s calc(0.6s + var(--i, 0) * 0.18s) var(--ease-spring) forwards;
 }
 
 .pt-text {
   clip-path: inset(0 100% 0 0);
+  animation: pt-wipe 0.8s 1.3s var(--ease) forwards;
 }
 
-/* Leaving */
-.pt-leave .page-loader,
-.pt-arrive .page-loader {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transition: opacity 0.4s var(--ease), visibility 0s;
+.pt-intro .pt-logo {
+  animation: pt-beat 0.45s 2.1s var(--ease);
 }
 
-.pt-leave .pt-line {
-  animation: pt-draw 1.3s 0.35s cubic-bezier(.55, .1, .35, 1) forwards;
-}
-
-.pt-leave .pt-head {
-  animation: pt-pop 0.55s calc(0.75s + var(--i, 0) * 0.18s) var(--ease-spring) forwards;
-}
-
-.pt-leave .pt-text {
-  animation: pt-wipe 0.8s 1.45s var(--ease) forwards;
-}
-
-.pt-leave .pt-logo {
-  animation: pt-beat 0.45s 2.25s var(--ease);
-}
-
-/* Arriving: the full logo is already there, then lifts away with the cream */
-.pt-arrive .page-loader {
-  transition: none;
-}
-
-.pt-arrive .pt-line {
-  stroke-dashoffset: 0;
-}
-
-.pt-arrive .pt-head {
-  transform: none;
-  opacity: 1;
-}
-
-.pt-arrive .pt-text {
-  clip-path: inset(0);
-}
-
-.pt-arrive.pt-reveal .page-loader {
-  opacity: 0;
-  transition: opacity 0.55s 0.3s var(--ease);
-}
-
-.pt-arrive.pt-reveal .pt-logo {
+.pt-intro.pt-reveal .pt-logo {
   animation: pt-lift 0.6s var(--ease) forwards;
 }
 
@@ -2039,6 +2029,10 @@ body.lb-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .page-loader {
+    display: none;
+  }
+
   .btn .ripple {
     animation: none !important;
   }
