@@ -20,17 +20,25 @@ document.querySelectorAll('.btn').forEach(btn => {
   });
 });
 
-// Page transitions: the page fades to cream and the logo's heartbeat draws before leaving;
-// the next page opens with the line drawn and clears it (pt-arrive is set in each page's head)
+// Page transitions: the page fades to cream and the logo builds itself before leaving;
+// the next page opens on the full logo (pt-arrive is set in each page's head)
 const root = document.documentElement;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LEAVE_MS = 2700;
 
 if (root.classList.contains('pt-arrive')) {
   try { sessionStorage.removeItem('pt'); } catch (e) {}
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('pt-reveal')));
-  setTimeout(() => root.classList.remove('pt-arrive', 'pt-reveal'), 800);
+  // Hold the logo briefly, and until the page has loaded (at most 2.5s), then reveal it
+  const minHold = new Promise(r => setTimeout(r, 450));
+  const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true }));
+  const cap = new Promise(r => setTimeout(r, 2500));
+  Promise.all([minHold, Promise.race([loaded, cap])]).then(() => {
+    root.classList.add('pt-reveal');
+    setTimeout(() => root.classList.remove('pt-arrive', 'pt-reveal'), 950);
+  });
 }
 
+let leaving = false;
 document.addEventListener('click', e => {
   const link = e.target.closest('a[href]');
   if (!link || reduceMotion || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -40,14 +48,21 @@ document.addEventListener('click', e => {
   // Same-page anchors just scroll
   if (url.pathname === location.pathname) return;
   e.preventDefault();
+  if (leaving) return;
+  leaving = true;
   try { sessionStorage.setItem('pt', '1'); } catch (e) {}
+  // Restart from a clean state so the animation always plays from the beginning
+  root.classList.remove('pt-arrive', 'pt-reveal');
+  void root.offsetWidth;
   root.classList.add('pt-leave');
-  setTimeout(() => (location.href = url.href), 1150);
+  setTimeout(() => (location.href = url.href), LEAVE_MS);
 });
 
 // Coming back with the browser's back button restores the page from cache, so reset it
 window.addEventListener('pageshow', e => {
-  if (e.persisted) root.classList.remove('pt-leave', 'pt-arrive', 'pt-reveal');
+  if (!e.persisted) return;
+  leaving = false;
+  root.classList.remove('pt-leave', 'pt-arrive', 'pt-reveal');
 });
 
 // Header gains a shadow once the page scrolls
